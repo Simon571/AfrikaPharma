@@ -1,0 +1,277 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  username     String     @unique
+  passwordHash String
+  totpSecret   String?
+  totpEnabled  Boolean    @default(false)
+  role         String
+  // Gestion de période d'essai
+  trialStartDate    DateTime?   // Date de début de l'essai
+  trialEndDate      DateTime?   // Date de fin calculée automatiquement
+  isTrialActive     Boolean     @default(true)  // Statut actuel de l'essai
+  subscriptionType  String      @default("trial") // "trial", "premium", "expired"
+  encryptedTrialData String?    // Données chiffrées pour sécurité
+  lastTrialCheck    DateTime?   // Dernière vérification du statut
+  trialDaysUsed     Int         @default(0) // Nombre de jours utilisés
+  // Métadonnées
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  // Relations
+  auditLogs      AuditLog[]
+  sales          Sale[]
+  expenses       Expense[]
+  stockMovements StockMovement[]
+  trialManagement TrialManagement?
+}
+
+model Medication {
+  id                 String     @id @default(cuid())
+  name               String
+  pharmaceuticalForm String
+  purchasePrice      Float
+  price              Float
+  quantity           Int
+  expirationDate     DateTime
+  barcode            String?    @unique
+  isAvailableForSale Boolean         @default(false)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  saleItems          SaleItem[]
+  stockMovements     StockMovement[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  address      String?
+  latitude     Float?
+  longitude    Float?
+  status       ClientStatus @default(ACTIVE)
+  sales        Sale[]
+  // Relations to licensing and billing
+  license      License?
+  subscriptions Subscription[]
+  payments     Payment[]
+}
+
+model Sale {
+  id             String     @id @default(cuid())
+  date           DateTime   @default(now())
+  totalAmount    Float
+  amountPaid     Float
+  changeDue      Float
+  paymentMethod  String
+  additionalFees Float      @default(0)
+  discount       Float      @default(0)
+  remarks        String?
+  sellerId       String
+  clientId       String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  client         Client     @relation(fields: [clientId], references: [id])
+  seller         User       @relation(fields: [sellerId], references: [id])
+  items          SaleItem[]
+}
+
+model SaleItem {
+  id           String     @id @default(cuid())
+  saleId       String
+  medicationId String
+  quantity     Int
+  priceAtSale  Float
+  medication   Medication @relation(fields: [medicationId], references: [id])
+  sale         Sale       @relation(fields: [saleId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  model     String
+  recordId  String
+  userId    String
+  timestamp DateTime @default(now())
+  oldValue  String?
+  newValue  String?
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model InvoiceSettings {
+  id             String   @id @default(cuid())
+  companyName    String
+  companyAddress String
+  companyPhone   String
+  companyEmail   String
+  headerText     String?
+  footerText     String?
+  logoUrl        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Expense {
+  id           String   @id @default(cuid())
+  description  String
+  amount       Float
+  category     String?
+  date         DateTime @default(now())
+  registeredBy String
+  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+// Mouvement de stock (entrées, sorties, corrections)
+model StockMovement {
+  id            String     @id @default(cuid())
+  medicationId  String
+  userId        String
+  type          MovementType
+  quantity      Int
+  reason        String?
+  previousStock Int        // stock avant l'opération
+  newStock      Int        // stock après
+  createdAt     DateTime   @default(now())
+  medication    Medication @relation(fields: [medicationId], references: [id])
+  user          User       @relation(fields: [userId], references: [id])
+}
+
+// Gestion avancée des périodes d'essai
+model TrialManagement {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  trialDuration     Int       @default(30) // Durée en jours
+  remainingDays     Int       @default(30) // Jours restants
+  extensionsGranted Int       @default(0)  // Nombre d'extensions accordées
+  maxExtensions     Int       @default(2)  // Nombre max d'extensions
+  isBlocked         Boolean   @default(false) // Blocage manuel
+  blockReason       String?   // Raison du blocage
+  premiumFeatures   Json?     // Fonctionnalités premium accessibles
+  usageMetrics      Json?     // Métriques d'utilisation
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("trial_management")
+}
+
+// Historique des vérifications de période d'essai
+model TrialAuditLog {
+  id            String    @id @default(cuid())
+  userId        String
+  action        String    // "check", "extend", "block", "unblock", "expire"
+  oldStatus     String?   // Ancien statut
+  newStatus     String?   // Nouveau statut
+  daysRemaining Int?      // Jours restants au moment de l'action
+  metadata      Json?     // Données supplémentaires
+  ipAddress     String?   // Adresse IP de la vérification
+  userAgent     String?   // User agent du navigateur
+  timestamp     DateTime  @default(now())
+  
+  @@map("trial_audit_logs")
+
+}
+
+// Licence attribuée à chaque client (application installée)
+model License {
+  id         String       @id @default(cuid())
+  clientId   String       @unique
+  key        String       @unique
+  status     LicenseStatus @default(ACTIVE)
+  issuedAt   DateTime     @default(now())
+  activatedAt DateTime?
+  expiresAt  DateTime?
+  assignedBy String?      // super-admin user id
+  usageLogs  Json?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  client     Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+// Abonnement payant lié à un client
+model Subscription {
+  id            String           @id @default(cuid())
+  clientId      String
+  plan          String           // e.g., "monthly", "annual", "pro"
+  status        SubscriptionStatus @default(PENDING)
+  startDate     DateTime?
+  endDate       DateTime?
+  billingCycle  String?
+  amount        Float?
+  currency      String? @default("EUR")
+  paymentMethod String?
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  client        Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+}
+
+// Paiements liés aux abonnements ou paiements ponctuels
+model Payment {
+  id            String       @id @default(cuid())
+  subscriptionId String?
+  clientId      String
+  amount        Float
+  currency      String?      @default("EUR")
+  status        PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  receiptUrl    String?
+  metadata      Json?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  client        Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  subscription  Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+// Statuts utilitaires
+enum ClientStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+  PENDING
+}
+
+enum LicenseStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+  EXPIRED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  PENDING
+  CANCELLED
+}
+
+enum PaymentStatus {
+  RECEIVED
+  PENDING
+  LATE
+  FAILED
+}
+enum MovementType {
+  ENTRY
+  EXIT
+  CORRECTION
+}

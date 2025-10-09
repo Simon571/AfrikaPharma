@@ -1,0 +1,43 @@
+name: Prod healthcheck
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *' # every hour
+
+jobs:
+  healthcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install
+        run: npm ci
+
+      - name: Run prod healthcheck (public only)
+        env:
+          PROD_ADMIN_USERNAME: ${{ secrets.PROD_ADMIN_USERNAME }}
+          PROD_ADMIN_PASSWORD: ${{ secrets.PROD_ADMIN_PASSWORD }}
+        run: node ./scripts/check-public.js
+
+      - name: Create issue on failure
+        if: ${{ failure() }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = `Prod healthcheck failed on ${process.env.GITHUB_REF_NAME || 'main'}`;
+            const body = `The scheduled prod healthcheck workflow failed. Check the Actions logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body });
+
+      - name: Slack notification on failure
+        if: ${{ failure() && secrets.SLACK_WEBHOOK }}
+        run: |
+          payload=$(jq -n --arg txt "Prod healthcheck failed: $GITHUB_REPOSITORY run $GITHUB_RUN_ID" '{text: $txt}')
+          curl -s -X POST -H 'Content-type: application/json' --data "$payload" ${{ secrets.SLACK_WEBHOOK }}

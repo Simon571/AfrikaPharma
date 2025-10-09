@@ -1,0 +1,19 @@
+name: CI Debug Runner
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  runner-check:
+    name: Runner check (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print runner info
+        run: |
+          echo "Runner OS: $RUNNER_OS"
+          echo "RUNNER_TEMP: $RUNNER_TEMP"
+          echo "uname:"; uname -a || true
+          echo "node:"; node --version || true
+          echo "java:"; java -version 2>&1 || true
+          echo "env (first 100 lines):"; env | sort | sed -n '1,100p'

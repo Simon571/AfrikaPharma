@@ -1,0 +1,5 @@
+<!-- Placeholder pour icon-512.png - Remplacez par votre vraie icône -->
+<!-- Cette icône 512x512 sera utilisée pour l'application mobile -->
+<!-- Utilisez un générateur d'icônes en ligne comme https://realfavicongenerator.net/ -->
+
+INSTRUCTION : Créez une icône PNG 512x512 pixels avec le logo PAJO PHARMA

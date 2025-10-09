@@ -1,0 +1,73 @@
+{
+  "name": "PAJO PHARMA - Gestion de Pharmacie",
+  "short_name": "PAJO PHARMA",
+  "description": "Système complet de gestion de pharmacie avec gestion des stocks, ventes et rapports",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512", 
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "medical"],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop.png", 
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Point de Vente",
+      "short_name": "Vente",
+      "description": "Accès rapide au point de vente",
+      "url": "/sell",
+      "icons": [
+        {
+          "src": "/icon-sell.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard Admin",
+      "short_name": "Admin",
+      "description": "Tableau de bord administrateur",
+      "url": "/admin-dashboard",
+      "icons": [
+        {
+          "src": "/icon-admin.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.pajopharma.app"
+    }
+  ]
+}

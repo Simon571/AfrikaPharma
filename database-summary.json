@@ -1,0 +1,26 @@
+{
+  "tables": [
+    "_prisma_migrations",
+    "User",
+    "Client",
+    "AuditLog",
+    "SaleItem",
+    "Sale",
+    "InvoiceSettings",
+    "Medication",
+    "Expense",
+    "StockMovement"
+  ],
+  "counts": {
+    "User": 3,
+    "Client": 7,
+    "AuditLog": 0,
+    "SaleItem": 6,
+    "Sale": 4,
+    "InvoiceSettings": 0,
+    "Medication": 500,
+    "Expense": 7,
+    "StockMovement": 14
+  },
+  "exportedAt": "2025-09-20T18:23:08.133Z"
+}

@@ -1,0 +1,75 @@
+name: Build Android APK (debug)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'android/**'
+      - 'app/**'
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: /usr/local/android-sdk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web for Capacitor (mobile)
+        run: npm run build:mobile:ci
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK (action)
+        uses: r0adkll/setup-android@v2
+        with:
+          api-levels: '33'
+          build-tools: '33.0.2'
+          components: 'platform-tools'
+          # install command-line-tools automatically
+          force-yes: true
+          sdk_root: ${{ env.ANDROID_SDK_ROOT }}
+
+      - name: Ensure ANDROID_HOME and PATH
+        run: |
+          export ANDROID_HOME=$ANDROID_SDK_ROOT
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
+
+      - name: Add platform-tools to PATH
+        run: echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build APK (assembleDebug)
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
