@@ -18,6 +18,7 @@ const formSchema = z.object({
   expirationDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Date invalide' }),
   barcode: z.string().min(1, 'Le code-barres est requis'),
   isAvailableForSale: z.boolean().default(true),
+  stockStatus: z.enum(['en stock', 'en rupture']).default('en stock'),
 });
 
 interface MedicationFormProps {
@@ -34,16 +35,19 @@ export function MedicationForm({ onSubmit, medication }: MedicationFormProps) {
       purchasePrice: medication?.purchasePrice || 0,
       price: medication?.price || 0,
       quantity: medication?.quantity || 0,
-      expirationDate: medication ? new Date(medication.expirationDate).toISOString().split('T')[0] : '',
+      expirationDate: medication?.expirationDate
+        ? new Date(medication.expirationDate).toISOString().split('T')[0]
+        : '',
       barcode: medication?.barcode || '',
       isAvailableForSale: medication?.isAvailableForSale ?? true,
+      stockStatus: (medication?.stockStatus as 'en stock' | 'en rupture') || 'en stock',
     },
   });
 
   const handleSubmit = (values: z.input<typeof formSchema>) => {
     onSubmit({ 
       ...values, 
-      expirationDate: new Date(values.expirationDate).toISOString(),
+      expirationDate: values.expirationDate ? new Date(values.expirationDate).toISOString() : '',
       purchasePrice: Number(values.purchasePrice), // Explicitly cast to number
       price: Number(values.price), // Explicitly cast to number
     });
@@ -162,6 +166,42 @@ export function MedicationForm({ onSubmit, medication }: MedicationFormProps) {
                   Disponible à la vente
                 </FormLabel>
               </div>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="stockStatus"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Statut du Stock</FormLabel>
+              <FormControl>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('en stock')}
+                    className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${
+                      field.value === 'en stock'
+                        ? 'bg-green-600 text-white shadow-lg'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    ✅ En stock
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('en rupture')}
+                    className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${
+                      field.value === 'en rupture'
+                        ? 'bg-red-600 text-white shadow-lg'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    🔴 Rupture
+                  </button>
+                </div>
+              </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />

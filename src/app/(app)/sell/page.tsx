@@ -24,6 +24,7 @@ interface Medication {
   price: number; // Assuming price is in CDF
   quantity: number; // stock quantity
   barcode: string;
+  expirationDate?: string | Date | null;
 }
 
 interface CartItem {
@@ -356,6 +357,7 @@ export default function SellPage() {
                           <TableHead className="text-sm">Nom</TableHead>
                           <TableHead className="text-sm">Prix</TableHead>
                           <TableHead className="text-sm">Stock</TableHead>
+                          <TableHead className="text-sm">Expiration</TableHead>
                           <TableHead className="text-sm">Action</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -378,6 +380,15 @@ export default function SellPage() {
                               <span className={med.quantity <= 0 ? 'text-red-600' : 'text-green-600'}>
                                 {med.quantity}
                               </span>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {med.expirationDate ? (
+                                <span className={new Date(med.expirationDate) < new Date() ? 'text-red-600 font-semibold' : 'text-gray-600'}>
+                                  {new Date(med.expirationDate).toLocaleDateString('fr-FR')}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">N/A</span>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Button
@@ -634,7 +645,7 @@ export default function SellPage() {
                       printWindow.document.write(`
                         <html>
                           <head>
-                            <title>Facture PAJO PHARMA</title>
+                            <title>Facture AfrikaPharma</title>
                             <style>
                               body { font-family: Arial, sans-serif; margin: 20px; }
                               .print-header { text-align: center; margin-bottom: 20px; }

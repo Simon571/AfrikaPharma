@@ -29,14 +29,20 @@ export async function ExpiringMedications() {
         <CardTitle>Médicaments Expirant Bientôt</CardTitle>
       </CardHeader>
       <CardContent>
-        {medications.map((medication) => (
-          <div key={medication.id} className="flex justify-between">
-            <span>{medication.name}</span>
-            <span className="text-orange-500">
-              Expire le {new Date(medication.expirationDate).toLocaleDateString()}
-            </span>
-          </div>
-        ))}
+        {medications.map((medication) => {
+          const expirationLabel = medication.expirationDate
+            ? new Date(medication.expirationDate).toLocaleDateString()
+            : 'N/A';
+
+          return (
+            <div key={medication.id} className="flex justify-between">
+              <span>{medication.name}</span>
+              <span className="text-orange-500">
+                Expire le {expirationLabel}
+              </span>
+            </div>
+          );
+        })}
       </CardContent>
     </Card>
   );

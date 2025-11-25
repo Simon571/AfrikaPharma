@@ -32,12 +32,14 @@ export function MedicationsTable() {
     expirationDate: string;
     barcode: string;
     isAvailableForSale?: boolean;
+    stockStatus?: 'en stock' | 'en rupture';
   }) => {
     // Transform the form data to match the API expectations
     const medicationData = {
       ...data,
-      expirationDate: new Date(data.expirationDate),
+      expirationDate: data.expirationDate ? new Date(data.expirationDate) : null,
       isAvailableForSale: data.isAvailableForSale ?? true,
+      stockStatus: data.stockStatus ?? (data.quantity > 0 ? 'en stock' : 'en rupture'),
     };
 
     if (selectedMedication) {
@@ -88,7 +90,11 @@ export function MedicationsTable() {
               <TableCell>{medication.name}</TableCell>
               <TableCell>{medication.price}</TableCell>
               <TableCell>{medication.quantity}</TableCell>
-              <TableCell>{new Date(medication.expirationDate).toLocaleDateString()}</TableCell>
+              <TableCell>
+                {medication.expirationDate
+                  ? new Date(medication.expirationDate).toLocaleDateString()
+                  : 'N/A'}
+              </TableCell>
               <TableCell>{medication.barcode}</TableCell>
               <TableCell>
                 <Button variant="outline" size="sm" onClick={() => { setSelectedMedication(medication); setIsDialogOpen(true); }}>Modifier</Button>

@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getMedications, createMedication, updateMedication, deleteMedication } from '@/lib/actions/medications';
@@ -15,9 +16,10 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 import { useSession } from 'next-auth/react';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, FileText } from 'lucide-react';
+import { Upload, FileText, ShoppingCart } from 'lucide-react';
 
 export function MedicationsList() {
+  const router = useRouter();
   const [medications, setMedications] = useState<Medication[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const { addItem } = useCartStore();
@@ -40,7 +42,8 @@ export function MedicationsList() {
         searchParams.append('search', search.trim());
       }
       
-      const url = `/api/medications${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
+      // Utiliser /api/medications/admin pour les admins (voir TOUS les médicaments)
+      const url = `/api/medications/admin${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
       const response = await fetch(url);
       
       if (response.ok) {
@@ -77,17 +80,28 @@ export function MedicationsList() {
   const filteredMedications = medications.sort((a, b) => a.name.localeCompare(b.name));
 
   const handleAddToCart = (medication: Medication) => {
+    if (medication.quantity <= 0) {
+      toast.error(`${medication.name} est en rupture de stock`);
+      return;
+    }
     addItem(medication, 1);
-    console.log('Médicament ajouté au panier:', medication);
+    toast.success(`${medication.name} ajouté au panier!`, {
+      description: `Allez à la page vente pour finaliser`
+    });
+    // Rediriger vers la page vente après une courte pause
+    setTimeout(() => {
+      router.push('/sell');
+    }, 500);
   };
 
   const handleFormSubmit = async (data: any) => {
     const medicationData = {
       ...data,
-      expirationDate: new Date(data.expirationDate).toISOString(),
+      expirationDate: data.expirationDate ? new Date(data.expirationDate) : null,
       purchasePrice: Number(data.purchasePrice),
       price: Number(data.price),
       isAvailableForSale: false, // Default to false when adding/editing from this form
+      stockStatus: data.stockStatus ?? (Number(data.quantity) > 0 ? 'en stock' : 'en rupture'),
     };
 
     if (selectedMedication) {
@@ -142,9 +156,10 @@ export function MedicationsList() {
                 purchasePrice: Number(purchasePrice),
                 price: Number(price),
                 quantity: Number(quantity),
-                expirationDate: new Date(expirationDate),
+                expirationDate: expirationDate ? new Date(expirationDate) : null,
                 barcode: '', // Optionnel
                 isAvailableForSale: false,
+                stockStatus: Number(quantity) > 0 ? 'en stock' : 'en rupture',
               };
 
               await createMedication(medicationData);
@@ -261,21 +276,63 @@ export function MedicationsList() {
         <TableHeader>
           <TableRow>
             <TableHead>Nom</TableHead>
+            <TableHead>Prix d&apos;achat</TableHead>
             <TableHead>Prix</TableHead>
             <TableHead>Quantité</TableHead>
             <TableHead>Date d&apos;expiration</TableHead>
+            <TableHead>Statut Stock</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredMedications.map((medication) => (
-            <TableRow key={medication.id}>
-              <TableCell>{medication.name}</TableCell>
-              <TableCell>{formatCurrency(medication.price)}</TableCell>
-              <TableCell>{medication.quantity}</TableCell>
-              <TableCell>{new Date(medication.expirationDate).toLocaleDateString()}</TableCell>
+            <TableRow key={medication.id} className={medication.quantity === 0 || medication.price === 0 ? 'bg-yellow-50' : ''}>
               <TableCell>
-              <Button onClick={() => { console.log('Bouton Ajouter au panier cliqué'); handleAddToCart(medication); }} className="cursor-pointer">Ajouter au panier</Button>
+                <div className="flex flex-col">
+                  <span className="font-medium">{medication.name}</span>
+                  {medication.price === 0 && <span className="text-xs text-orange-600">⚠️ Pas de prix</span>}
+                </div>
+              </TableCell>
+              <TableCell>{formatCurrency(medication.purchasePrice)}</TableCell>
+              <TableCell>
+                <span className={medication.price === 0 ? 'text-orange-600 font-semibold' : ''}>
+                  {formatCurrency(medication.price)}
+                  {medication.price === 0 && ' ❌'}
+                </span>
+              </TableCell>
+              <TableCell>
+                {medication.stockStatus === 'en rupture' ? (
+                  <span className="text-red-600 font-semibold">00</span>
+                ) : (
+                  <span className={medication.quantity === 0 ? 'text-red-600 font-semibold' : ''}>
+                    {medication.quantity}
+                    {medication.quantity === 0 && ' ❌'}
+                  </span>
+                )}
+              </TableCell>
+              <TableCell>
+                {medication.expirationDate ? new Date(medication.expirationDate).toLocaleDateString() : 'N/A'}
+              </TableCell>
+              <TableCell>
+                <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                  medication.stockStatus === 'en rupture' 
+                    ? 'bg-red-100 text-red-800' 
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  {medication.stockStatus === 'en rupture' ? '🔴 Rupture' : '✅ En stock'}
+                </span>
+              </TableCell>
+              <TableCell>
+              <Button 
+                onClick={() => handleAddToCart(medication)} 
+                className="cursor-pointer flex items-center gap-2"
+                size="sm"
+                disabled={medication.quantity === 0 || medication.price === 0}
+                variant={medication.quantity === 0 || medication.price === 0 ? 'outline' : 'default'}
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Ajouter au panier
+              </Button>
               {isAdmin && (
                 <>
                   <Button variant="outline" size="sm" onClick={() => { setSelectedMedication(medication); setIsDialogOpen(true); }} className="ml-2 cursor-pointer">Modifier</Button>
