@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { StatsCards } from '@/components/admin/stats-cards';
 import { RecentSales } from '@/components/admin/recent-sales';
 import { ExpiringMedications } from '@/components/admin/expiring-medications';
@@ -15,16 +16,23 @@ export default function AdminDashboardPage() {
       <MobileNavigation userRole="admin" />
       <div className="flex flex-col gap-4 p-4">
       <h1 className="text-2xl font-bold">Tableau de Bord Administrateur</h1>
-      <a href="/api/sales/export" download="sales_report.csv">
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Exporter les ventes (CSV)
-        </button>
-      </a>
-      <a href="/api/data/export" download="pajo_pharma_backup.json" className="ml-2">
-        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-          Exporter toutes les données (JSON)
-        </button>
-      </a>
+      <div className="flex flex-wrap gap-3">
+        <a href="/api/sales/export" download="sales_report.csv">
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Exporter les ventes (CSV)
+          </button>
+        </a>
+        <a href="/api/data/export" download="AfrikaPharma_backup.json">
+          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            Exporter toutes les données (JSON)
+          </button>
+        </a>
+        <Link href="/admin/exchange-rate">
+          <button className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded">
+            Gérer le taux USD/CDF
+          </button>
+        </Link>
+      </div>
       <Suspense fallback={<p>Chargement des statistiques...</p>}>
         <StatsCards />
       </Suspense>

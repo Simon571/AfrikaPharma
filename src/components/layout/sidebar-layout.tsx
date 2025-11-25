@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, Package, ShoppingCart, Users, LogOut, Boxes, Tag, Receipt, ArrowUpDown, BarChart3, Warehouse } from 'lucide-react';
+import { Home, Package, ShoppingCart, Users, LogOut, Boxes, Tag, Receipt, ArrowUpDown, BarChart3, Warehouse, DollarSign } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { useSmartSignOut } from '@/hooks/use-smart-signout';
@@ -37,7 +37,7 @@ export default function SidebarLayout({ children }: SidebarLayoutProps) {
         "fixed top-0 left-0 h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 shadow-lg p-4 transition-all duration-300 ease-in-out overflow-y-auto z-10 hidden lg:block",
         isSidebarOpen ? "w-64" : "w-0 overflow-hidden"
       )}>
-        <div className="text-2xl font-bold mb-6 text-white">PAJO PHARMA</div>
+        <div className="text-2xl font-bold mb-6 text-white">AfrikaPharma</div>
         <nav className="space-y-2">
           {isAdmin && (
             <Link
@@ -206,6 +206,18 @@ export default function SidebarLayout({ children }: SidebarLayoutProps) {
             >
               <Receipt className="mr-3 h-5 w-5" />
               Gestion des Dépenses
+            </Link>
+          )}
+          {isAdmin && (
+            <Link
+              href="/admin/exchange-rate"
+              className={cn(
+                "flex items-center p-2 rounded-md text-white hover:bg-white/20 transition-colors",
+                pathname === '/admin/exchange-rate' && 'bg-white/30 text-white font-semibold'
+              )}
+            >
+              <DollarSign className="mr-3 h-5 w-5" />
+              Taux de change
             </Link>
           )}
           {session && (
