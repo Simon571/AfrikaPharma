@@ -40,9 +40,10 @@ model Medication {
   purchasePrice      Float
   price              Float
   quantity           Int
-  expirationDate     DateTime
+  expirationDate     DateTime?
   barcode            String?    @unique
   isAvailableForSale Boolean         @default(false)
+  stockStatus        String          @default("en stock")  // "en stock" ou "en rupture"
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   saleItems          SaleItem[]
@@ -222,6 +223,14 @@ model Subscription {
 
   client        Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
   payments      Payment[]
+}
+
+model ExchangeRateSetting {
+  id        String   @id @default("usd_to_cdf")
+  usdToCdf  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String?
 }
 
 // Paiements liés aux abonnements ou paiements ponctuels
