@@ -178,13 +178,7 @@ export default function InventoryPage() {
           <h1 className="text-3xl font-bold text-gray-900">Inventaire</h1>
           <p className="text-gray-600 mt-1">Gestion et suivi des stocks de médicaments</p>
         </div>
-        <div className="flex items-center gap-2">
-          <PrintButton 
-            contentRef={printRef} 
-            title="Inventaire des Médicaments"
-          >
-            Imprimer
-          </PrintButton>
+        <div className="flex items-center gap-3">
           <Button
             onClick={fetchInventory}
             disabled={isLoading}
@@ -194,6 +188,10 @@ export default function InventoryPage() {
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Actualiser
           </Button>
+          <PrintButton 
+            contentRef={printRef} 
+            title="Inventaire des Médicaments"
+          />
         </div>
       </div>
 
