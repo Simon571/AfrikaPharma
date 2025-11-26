@@ -9,7 +9,7 @@ import { getMedications, createMedication, updateMedication, deleteMedication } 
 import { Medication } from '@prisma/client';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/lib/store/cart';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, convertCdfToUsd } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MedicationForm } from './medication-form';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ import * as z from 'zod';
 import { useSession } from 'next-auth/react';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, FileText, ShoppingCart } from 'lucide-react';
+import { useExchangeRate } from '@/hooks/use-exchange-rate';
 
 export function MedicationsList() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export function MedicationsList() {
   const [importText, setImportText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
+  const { rate: exchangeRate, isLoading: isRateLoading } = useExchangeRate();
   
   // Check if user is admin
   const isAdmin = session?.user?.role === 'admin';
@@ -197,6 +199,25 @@ export function MedicationsList() {
 
   return (
     <div>
+      {/* Indicateur du taux de change actuel */}
+      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-blue-800">
+            💱 <strong>Taux de change actuel :</strong>{' '}
+            {isRateLoading ? (
+              'Chargement...'
+            ) : (
+              <>1 USD = <span className="font-bold">{exchangeRate.toLocaleString()}</span> CDF</>
+            )}
+          </span>
+          {isAdmin && (
+            <a href="/admin/exchange-rate" className="text-xs text-blue-600 hover:underline">
+              Modifier le taux →
+            </a>
+          )}
+        </div>
+      </div>
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Input
@@ -276,8 +297,8 @@ export function MedicationsList() {
         <TableHeader>
           <TableRow>
             <TableHead>Nom</TableHead>
-            <TableHead>Prix d&apos;achat</TableHead>
-            <TableHead>Prix</TableHead>
+            <TableHead>Prix d&apos;achat (CDF/USD)</TableHead>
+            <TableHead>Prix vente (CDF/USD)</TableHead>
             <TableHead>Quantité</TableHead>
             <TableHead>Date d&apos;expiration</TableHead>
             <TableHead>Statut Stock</TableHead>
@@ -293,12 +314,24 @@ export function MedicationsList() {
                   {medication.price === 0 && <span className="text-xs text-orange-600">⚠️ Pas de prix</span>}
                 </div>
               </TableCell>
-              <TableCell>{formatCurrency(medication.purchasePrice)}</TableCell>
               <TableCell>
-                <span className={medication.price === 0 ? 'text-orange-600 font-semibold' : ''}>
-                  {formatCurrency(medication.price)}
-                  {medication.price === 0 && ' ❌'}
-                </span>
+                <div className="flex flex-col">
+                  <span>{formatCurrency(medication.purchasePrice)}</span>
+                  <span className="text-xs text-blue-600">
+                    ≈ {formatCurrency(convertCdfToUsd(medication.purchasePrice, exchangeRate), 'USD')}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col">
+                  <span className={medication.price === 0 ? 'text-orange-600 font-semibold' : ''}>
+                    {formatCurrency(medication.price)}
+                    {medication.price === 0 && ' ❌'}
+                  </span>
+                  <span className="text-xs text-green-600">
+                    ≈ {formatCurrency(convertCdfToUsd(medication.price, exchangeRate), 'USD')}
+                  </span>
+                </div>
               </TableCell>
               <TableCell>
                 {medication.stockStatus === 'en rupture' ? (
