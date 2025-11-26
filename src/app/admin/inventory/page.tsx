@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
+import { PrintButton } from '@/components/ui/print-button';
 import { 
   Package, 
   AlertTriangle, 
@@ -54,6 +55,7 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'low-stock' | 'expiring' | 'out-of-stock'>('all');
   const [isLoading, setIsLoading] = useState(false);
+  const printRef = React.useRef<HTMLDivElement>(null);
 
   const fetchInventory = async () => {
     setIsLoading(true);
@@ -176,18 +178,27 @@ export default function InventoryPage() {
           <h1 className="text-3xl font-bold text-gray-900">Inventaire</h1>
           <p className="text-gray-600 mt-1">Gestion et suivi des stocks de médicaments</p>
         </div>
-        <Button
-          onClick={fetchInventory}
-          disabled={isLoading}
-          variant="outline"
-          className="flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          Actualiser
-        </Button>
+        <div className="flex items-center gap-2">
+          <PrintButton 
+            contentRef={printRef} 
+            title="Inventaire des Médicaments"
+          >
+            Imprimer
+          </PrintButton>
+          <Button
+            onClick={fetchInventory}
+            disabled={isLoading}
+            variant="outline"
+            className="flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       {/* Statistiques */}
+      <div ref={printRef}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -375,6 +386,7 @@ export default function InventoryPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
