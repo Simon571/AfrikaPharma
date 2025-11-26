@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,8 +15,9 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 import { useSession } from 'next-auth/react';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, FileText, ShoppingCart } from 'lucide-react';
+import { Upload, FileText, ShoppingCart, Printer } from 'lucide-react';
 import { useExchangeRate } from '@/hooks/use-exchange-rate';
+import { PrintButton } from '@/components/ui/print-button';
 
 export function MedicationsList() {
   const router = useRouter();
@@ -31,6 +31,7 @@ export function MedicationsList() {
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
   const { rate: exchangeRate, isLoading: isRateLoading } = useExchangeRate();
+  const printRef = React.useRef<HTMLDivElement>(null);
   
   // Check if user is admin
   const isAdmin = session?.user?.role === 'admin';
@@ -230,6 +231,15 @@ export function MedicationsList() {
         
         {isAdmin && (
           <div className="flex items-center space-x-2">
+            {/* Bouton d'impression */}
+            <PrintButton 
+              contentRef={printRef} 
+              title="Liste des Médicaments"
+              variant="outline"
+            >
+              Imprimer
+            </PrintButton>
+            
             {/* Bouton d'import */}
             <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
               <DialogTrigger asChild>
@@ -293,6 +303,7 @@ export function MedicationsList() {
         )}
       </div>
       
+      <div ref={printRef}>
       <Table>
         <TableHeader>
           <TableRow>
@@ -377,6 +388,7 @@ export function MedicationsList() {
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }

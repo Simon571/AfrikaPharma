@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Sale, SaleItem, User, Client, Medication } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { PrintButton } from "@/components/ui/print-button";
 
 interface SaleWithDetails extends Sale {
   seller: User;
@@ -17,6 +18,7 @@ export default function HistoriqueVentesPage() {
   const [sales, setSales] = useState<SaleWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const printRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchSales = async () => {
@@ -47,28 +49,36 @@ export default function HistoriqueVentesPage() {
     <div className="container mx-auto p-4">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Historique des Ventes</h1>
-        <Button
-          variant="outline"
-          className="cursor-pointer"
-          onClick={async () => {
-            setLoading(true);
-            try {
-              const res = await fetch('/api/sales', { cache: 'no-store' });
-              const data = await res.json();
-              setSales(data as SaleWithDetails[]);
-            } catch (e) {
-              console.error(e);
-              setError("Erreur lors du chargement de l&apos;historique des ventes.");
-            } finally {
-              setLoading(false);
-            }
-          }}
-        >
-          Actualiser
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="cursor-pointer"
+            onClick={async () => {
+              setLoading(true);
+              try {
+                const res = await fetch('/api/sales', { cache: 'no-store' });
+                const data = await res.json();
+                setSales(data as SaleWithDetails[]);
+              } catch (e) {
+                console.error(e);
+                setError("Erreur lors du chargement de l&apos;historique des ventes.");
+              } finally {
+                setLoading(false);
+              }
+            }}
+          >
+            Actualiser
+          </Button>
+          <PrintButton 
+            contentRef={printRef} 
+            title="Historique des Ventes"
+          >
+            Imprimer
+          </PrintButton>
+        </div>
       </div>
 
-      <Card>
+      <Card ref={printRef}>
         <CardHeader>
           <CardTitle>Toutes les Ventes</CardTitle>
         </CardHeader>

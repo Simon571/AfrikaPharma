@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Plus, Minus, PackageOpen } from 'lucide-react';
+import { Plus, Minus, PackageOpen, Printer } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { PrintButton } from '@/components/ui/print-button';
 
 interface Medication {
   id: string;
@@ -28,12 +29,14 @@ export default function StockMovementsPage() {
   const [pendingEntries, setPendingEntries] = useState<PendingEntryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'movement' | 'entries' | 'corrections'>('movement');
   const [submitting, setSubmitting] = useState(false);
+  const printRef = React.useRef<HTMLDivElement>(null);
 
   // Fetch medications
   const fetchMedications = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/medications?available=true&search=${encodeURIComponent(search)}`);
+      // Pour la gestion de stock, on veut TOUS les médicaments, pas seulement ceux disponibles pour la vente
+      const res = await fetch(`/api/medications/all?search=${encodeURIComponent(search)}`);
       if (!res.ok) throw new Error('Erreur chargement médicaments');
       const data = await res.json();
       setMedications(data);
@@ -122,6 +125,12 @@ export default function StockMovementsPage() {
           <p className="text-gray-600">Ajoutez des arrivages, corrigez les erreurs et suivez l'historique des mouvements.</p>
         </div>
         <div className="flex space-x-4">
+          <PrintButton 
+            contentRef={printRef} 
+            title="Mouvements de Stock"
+          >
+            Imprimer
+          </PrintButton>
           <button 
             onClick={() => setActiveTab('movement')}
             className={`px-4 py-2 rounded-lg ${activeTab === 'movement' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
@@ -144,7 +153,7 @@ export default function StockMovementsPage() {
       </div>
 
       {activeTab === 'movement' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div ref={printRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Liste des Produits */}
         <div className="lg:col-span-2">
           <Card>

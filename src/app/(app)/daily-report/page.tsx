@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PrintButton } from '@/components/ui/print-button';
 
 interface DailyReportData {
   todaySales: {
@@ -55,6 +56,7 @@ interface Sale {
 export default function DailyReportPage() {
   const { data: session } = useSession();
   const [reportData, setReportData] = useState<DailyReportData | null>(null);
+  const printRef = React.useRef<HTMLDivElement>(null);
   const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
   const [todaySalesDetails, setTodaySalesDetails] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -201,7 +203,15 @@ export default function DailyReportPage() {
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* En-tête */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Mon Rapport du Jour</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-3xl font-bold text-gray-900">Mon Rapport du Jour</h1>
+          <PrintButton 
+            contentRef={printRef} 
+            title="Rapport Journalier Vendeur"
+          >
+            Imprimer le rapport
+          </PrintButton>
+        </div>
         <p className="text-gray-600">
           Consultez vos ventes et enregistrez vos dépenses pour la journée du{' '}
           {new Date().toLocaleDateString('fr-FR', { 
@@ -212,7 +222,7 @@ export default function DailyReportPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div ref={printRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Résumé de la journée */}
         <Card>
           <CardHeader>

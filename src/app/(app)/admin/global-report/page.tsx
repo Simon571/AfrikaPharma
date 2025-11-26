@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { PrintButton } from '@/components/ui/print-button';
 
 interface SellerReport {
   sellerId: string;
@@ -80,6 +81,7 @@ export default function GlobalReportPage() {
   const [reportData, setReportData] = useState<GlobalReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSellers, setExpandedSellers] = useState<Set<string>>(new Set());
+  const printRef = React.useRef<HTMLDivElement>(null);
 
   const toggleSellerExpansion = (sellerId: string) => {
     const newExpanded = new Set(expandedSellers);
@@ -182,14 +184,23 @@ export default function GlobalReportPage() {
               })}
             </p>
           </div>
+          <div className="flex items-center gap-2">
           <Button onClick={fetchReportData} variant="outline" className="cursor-pointer">
             <Activity className="h-4 w-4 mr-2" />
             Actualiser
           </Button>
+          <PrintButton 
+            contentRef={printRef} 
+            title="Rapport Journalier Global - Admin"
+          >
+            Imprimer
+          </PrintButton>
+        </div>
         </div>
       </div>
 
       {/* Statistiques globales */}
+      <div ref={printRef}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -483,6 +494,7 @@ export default function GlobalReportPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

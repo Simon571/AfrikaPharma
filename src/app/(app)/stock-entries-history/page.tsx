@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, ArrowLeft, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
+import { PrintButton } from '@/components/ui/print-button';
 
 interface StockEntry {
   id: string;
@@ -36,6 +37,7 @@ export default function StockEntriesHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [openMonths, setOpenMonths] = useState<Set<string>>(new Set());
   const router = useRouter();
+  const printRef = React.useRef<HTMLDivElement>(null);
 
   const fetchEntries = async () => {
     try {
@@ -126,6 +128,7 @@ export default function StockEntriesHistoryPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -139,6 +142,13 @@ export default function StockEntriesHistoryPage() {
           </div>
         </div>
       </div>
+      <PrintButton 
+        contentRef={printRef} 
+        title="Historique des Entrées de Stock"
+      >
+        Imprimer
+      </PrintButton>
+      </div>
 
       {monthlyData.length === 0 ? (
         <Card>
@@ -147,7 +157,7 @@ export default function StockEntriesHistoryPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div ref={printRef} className="space-y-6">
           {sortedYears.map((year) => (
             <div key={year} className="space-y-4">
               <h2 className="text-xl font-semibold">{year}</h2>
